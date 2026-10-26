@@ -1,0 +1,6 @@
+{
+  "name": "Nexora Investment",
+  "description": "High-yield real estate investment packages, daily returns, affiliate commissions, and interactive roulette.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

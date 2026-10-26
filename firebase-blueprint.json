@@ -1,0 +1,137 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with balance, referral info and bound payout details",
+      "type": "object",
+      "properties": {
+        "mobileNumber": { "type": "string", "description": "Mobile number used for authentication" },
+        "password": { "type": "string", "description": "Hashed or secured password string" },
+        "balance": { "type": "number", "description": "Current wallet balance in Philippine Pesos" },
+        "referralCode": { "type": "string", "description": "Unique referral code" },
+        "referredBy": { "type": "string", "description": "Referral code of inviter or null" },
+        "withdrawalMethod": { "type": "string", "description": "GCash or Maya payout channel", "enum": ["GCash", "Maya"] },
+        "accountName": { "type": "string", "description": "Bound payout account name" },
+        "accountNumber": { "type": "string", "description": "Bound GCash or Maya mobile number" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["mobileNumber", "password", "balance", "referralCode", "createdAt"]
+    },
+    "Investment": {
+      "title": "Investment",
+      "description": "Active real estate investment contract purchased by a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "ID of user owning the contract" },
+        "planName": { "type": "string", "description": "Name of the real estate investment plan" },
+        "cost": { "type": "number", "description": "Purchase cost in PHP" },
+        "dailyReturn": { "type": "number", "description": "Daily return yield in PHP" },
+        "daysRemaining": { "type": "number", "description": "Days remaining in the investment cycle" },
+        "daysCollectedCount": { "type": "number", "description": "Number of days already collected" },
+        "lastCollectedAt": { "type": "string", "description": "Timestamp of last daily yield collection" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["userId", "planName", "cost", "dailyReturn", "daysRemaining", "daysCollectedCount", "lastCollectedAt", "createdAt"]
+    },
+    "Deposit": {
+      "title": "Deposit",
+      "description": "Deposit verification request submitted by a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "ID of user requesting deposit" },
+        "amount": { "type": "number", "description": "Deposit amount in PHP" },
+        "proofImageUrl": { "type": "string", "description": "Firebase storage URL of payment screenshot" },
+        "status": { "type": "string", "description": "Verification status", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "description": "Timestamp of deposit request" }
+      },
+      "required": ["userId", "amount", "proofImageUrl", "status", "createdAt"]
+    },
+    "Withdrawal": {
+      "title": "Withdrawal",
+      "description": "Withdrawal request submitted by a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "ID of user requesting withdrawal" },
+        "amount": { "type": "number", "description": "Withdrawal amount in PHP" },
+        "withdrawalMethod": { "type": "string", "description": "GCash or Maya" },
+        "accountName": { "type": "string", "description": "Payout account name" },
+        "accountNumber": { "type": "string", "description": "Payout mobile number" },
+        "status": { "type": "string", "description": "Withdrawal status", "enum": ["pending", "approved", "paid"] },
+        "createdAt": { "type": "string", "description": "Timestamp of withdrawal request" }
+      },
+      "required": ["userId", "amount", "withdrawalMethod", "accountName", "accountNumber", "status", "createdAt"]
+    },
+    "Coupon": {
+      "title": "Coupon",
+      "description": "One-time use coupon code for bonus balance",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "description": "Uppercase coupon code" },
+        "amount": { "type": "number", "description": "Bonus amount in PHP" },
+        "isUsed": { "type": "boolean", "description": "Whether coupon has been redeemed" },
+        "usedBy": { "type": "string", "description": "UID of redeemer" },
+        "usedAt": { "type": "string", "description": "Timestamp of redemption" },
+        "createdAt": { "type": "string", "description": "Timestamp of creation" }
+      },
+      "required": ["code", "amount", "isUsed", "createdAt"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Global application configuration for deposit QR and community channels",
+      "type": "object",
+      "properties": {
+        "activeDepositQrUrl": { "type": "string", "description": "Official GCash/Maya deposit QR code image URL" },
+        "communityChatLink": { "type": "string", "description": "Dedicated community Telegram/WhatsApp chat link" },
+        "communityQrUrl": { "type": "string", "description": "Dedicated community channel QR code image URL" }
+      },
+      "required": ["activeDepositQrUrl", "communityChatLink", "communityQrUrl"]
+    },
+    "RouletteLog": {
+      "title": "RouletteLog",
+      "description": "Audit record for roulette spins and live win ticker",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "ID of user who spun" },
+        "mobileNumber": { "type": "string", "description": "Mobile number of user" },
+        "betAmount": { "type": "number", "description": "Bet amount in PHP" },
+        "outcome": { "type": "string", "description": "Result outcome" },
+        "multiplier": { "type": "number", "description": "Multiplier achieved" },
+        "payout": { "type": "number", "description": "Total payout returned" },
+        "playerProfit": { "type": "number", "description": "Player net profit (Payout - Bet)" },
+        "houseProfit": { "type": "number", "description": "House net profit (Bet - Payout)" },
+        "createdAt": { "type": "string", "description": "Timestamp of spin" }
+      },
+      "required": ["userId", "mobileNumber", "betAmount", "outcome", "multiplier", "payout", "playerProfit", "houseProfit", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "User profile collection"
+    },
+    "/investments/{investmentId}": {
+      "schema": { "$ref": "Investment" },
+      "description": "Purchased real estate packages"
+    },
+    "/deposits/{depositId}": {
+      "schema": { "$ref": "Deposit" },
+      "description": "Deposit proofs submitted for manual approval"
+    },
+    "/withdrawals/{withdrawalId}": {
+      "schema": { "$ref": "Withdrawal" },
+      "description": "Withdrawal requests queue"
+    },
+    "/coupons/{couponId}": {
+      "schema": { "$ref": "Coupon" },
+      "description": "One-time bonus coupon codes"
+    },
+    "/settings/{configId}": {
+      "schema": { "$ref": "Settings" },
+      "description": "Global settings such as active QR and community links"
+    },
+    "/roulette_logs/{logId}": {
+      "schema": { "$ref": "RouletteLog" },
+      "description": "Live audit logs of roulette spins"
+    }
+  }
+}
