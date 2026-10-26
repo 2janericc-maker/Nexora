@@ -191,16 +191,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ settings, onExitAdmin 
 
     setIsUploadingDepositQr(true);
     setSettingsNotice(null);
+    setActionError(null);
 
     try {
+      console.log('Uploading Deposit QR to admin-qr/...', file.name, `${file.size} bytes`);
       const url = await uploadFileToStorage('admin-qr', file);
       await updateAppSettings({ activeDepositQrUrl: url });
       setSettingsNotice('Official Deposit QR Code updated successfully!');
-      setTimeout(() => setSettingsNotice(null), 3000);
+      setTimeout(() => setSettingsNotice(null), 3500);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to upload Deposit QR.');
+      console.error("Upload error:", err);
+      const msg = err instanceof Error ? err.message : 'Failed to upload Deposit QR. Please verify image file format and permissions.';
+      setActionError(`Deposit QR Upload Failed: ${msg}`);
     } finally {
       setIsUploadingDepositQr(false);
+      e.target.value = '';
     }
   };
 
@@ -210,16 +215,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ settings, onExitAdmin 
 
     setIsUploadingCommunityQr(true);
     setSettingsNotice(null);
+    setActionError(null);
 
     try {
+      console.log('Uploading Community QR to admin-qr/...', file.name, `${file.size} bytes`);
       const url = await uploadFileToStorage('admin-qr', file);
       await updateAppSettings({ communityQrUrl: url });
       setSettingsNotice('Community QR Code updated successfully!');
-      setTimeout(() => setSettingsNotice(null), 3000);
+      setTimeout(() => setSettingsNotice(null), 3500);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to upload Community QR.');
+      console.error("Upload error:", err);
+      const msg = err instanceof Error ? err.message : 'Failed to upload Community QR. Please verify image file format and permissions.';
+      setActionError(`Community QR Upload Failed: ${msg}`);
     } finally {
       setIsUploadingCommunityQr(false);
+      e.target.value = '';
     }
   };
 
@@ -802,11 +812,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ settings, onExitAdmin 
                 )}
               </div>
 
-              <label className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all shadow-sm">
+              <label
+                className={`w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-sm ${
+                  isUploadingDepositQr ? 'opacity-50 pointer-events-none cursor-not-allowed' : 'cursor-pointer'
+                }`}
+              >
                 {isUploadingDepositQr ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Uploading QR Image...</span>
+                    <span>Uploading QR Image to admin-qr/...</span>
                   </>
                 ) : (
                   <>
@@ -845,11 +859,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ settings, onExitAdmin 
                 )}
               </div>
 
-              <label className="w-full py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-800 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all border border-stone-200">
+              <label
+                className={`w-full py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-800 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all border border-stone-200 ${
+                  isUploadingCommunityQr ? 'opacity-50 pointer-events-none cursor-not-allowed' : 'cursor-pointer'
+                }`}
+              >
                 {isUploadingCommunityQr ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Uploading Community QR...</span>
+                    <span>Uploading Community QR to admin-qr/...</span>
                   </>
                 ) : (
                   <>

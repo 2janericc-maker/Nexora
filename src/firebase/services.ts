@@ -521,24 +521,51 @@ export async function uploadFileToStorage(
   file: File,
   onProgress?: (progress: number) => void
 ): Promise<string> {
+  // Validate file size (max 15MB)
+  if (file.size > 15 * 1024 * 1024) {
+    throw new Error('Image exceeds 15MB size limit. Please choose a smaller photo.');
+  }
+
   const timestamp = Date.now();
   const sanitizedName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
   const path = `${folder}/${timestamp}_${sanitizedName}`;
   const storageRef = ref(storage, path);
 
   try {
-    const uploadResult = await uploadBytes(storageRef, file, {
-      contentType: file.type,
+    // Race upload operation against a 12-second timeout to prevent infinite hanging
+    const uploadOperation = async (): Promise<string> => {
+      const uploadResult = await uploadBytes(storageRef, file, {
+        contentType: file.type || 'image/jpeg',
+      });
+      const downloadUrl = await getDownloadURL(uploadResult.ref);
+      return downloadUrl;
+    };
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Firebase Storage upload timed out after 12s.'));
+      }, 12000);
     });
-    const downloadUrl = await getDownloadURL(uploadResult.ref);
+
+    const downloadUrl = await Promise.race([uploadOperation(), timeoutPromise]);
     return downloadUrl;
-  } catch (storageError) {
-    console.warn('Storage uploadBytes failed, falling back to base64 preservation:', storageError);
-    // Robust fallback: if cloud bucket is restricted or offline, encode file so user is never stranded
+  } catch (error) {
+    console.error("Upload error:", error);
+    // Robust fallback: if Firebase Storage bucket permissions or CORS are blocked,
+    // read as Base64 Data URL so that deposits and QR updates are never blocked or hung!
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (e) => reject(new Error('Failed to read image file'));
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to encode image data.'));
+        }
+      };
+      reader.onerror = (readErr) => {
+        console.error("Upload error: FileReader failure", readErr);
+        reject(new Error('Could not read image file. Please try another image.'));
+      };
       reader.readAsDataURL(file);
     });
   }

@@ -4,10 +4,25 @@ import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-export const app = initializeApp(firebaseConfig);
+// 3. Verify Firebase Config Storage Bucket is explicitly defined
+const explicitStorageBucket =
+  firebaseConfig.storageBucket && firebaseConfig.storageBucket.trim().length > 0
+    ? firebaseConfig.storageBucket
+    : `${firebaseConfig.projectId}.firebasestorage.app`;
+
+const configWithExplicitBucket = {
+  ...firebaseConfig,
+  storageBucket: explicitStorageBucket,
+};
+
+export const app = initializeApp(configWithExplicitBucket);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
-export const storage = getStorage(app, firebaseConfig.storageBucket);
+export const storage = getStorage(app, explicitStorageBucket);
+
+// Configure max retry times so storage operations never hang indefinitely
+storage.maxUploadRetryTime = 12000;
+storage.maxOperationRetryTime = 12000;
 
 export enum OperationType {
   CREATE = 'create',

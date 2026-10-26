@@ -131,12 +131,17 @@ export const WalletSection: React.FC<WalletSectionProps> = ({
       setDepositError('Please upload your payment transaction screenshot receipt.');
       return;
     }
+    if (depositProofFile.size > 15 * 1024 * 1024) {
+      setDepositError('Image file is too large (max 15MB). Please choose a smaller photo.');
+      return;
+    }
 
     setIsSubmittingDeposit(true);
     setDepositError(null);
     setDepositSuccess(false);
 
     try {
+      console.log('Uploading deposit proof to deposit-proofs/...', depositProofFile.name, `${depositProofFile.size} bytes`);
       const proofUrl = await uploadFileToStorage('deposit-proofs', depositProofFile);
       await submitDepositProof(user.id, user.mobileNumber, depositAmount, proofUrl);
 
@@ -145,7 +150,12 @@ export const WalletSection: React.FC<WalletSectionProps> = ({
       setDepositProofPreview(null);
       setTimeout(() => setDepositSuccess(false), 5000);
     } catch (err) {
-      setDepositError(err instanceof Error ? err.message : 'Failed to submit deposit.');
+      console.error("Upload error:", err);
+      const errorMsg =
+        err instanceof Error
+          ? err.message
+          : 'Failed to upload payment proof. Please check your network connection or image format.';
+      setDepositError(`Upload Failed: ${errorMsg}`);
     } finally {
       setIsSubmittingDeposit(false);
     }
@@ -346,7 +356,11 @@ export const WalletSection: React.FC<WalletSectionProps> = ({
                 <label className="text-xs font-semibold text-slate-700 block">
                   Upload Payment Screenshot (GCash / Maya Receipt)
                 </label>
-                <label className="border-2 border-dashed border-stone-200 hover:border-amber-400 rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer bg-stone-50/70 hover:bg-stone-50 transition-colors">
+                <label
+                  className={`border-2 border-dashed border-stone-200 hover:border-amber-400 rounded-2xl p-5 flex flex-col items-center justify-center bg-stone-50/70 hover:bg-stone-50 transition-colors ${
+                    isSubmittingDeposit ? 'opacity-50 pointer-events-none cursor-not-allowed' : 'cursor-pointer'
+                  }`}
+                >
                   {depositProofPreview ? (
                     <div className="flex flex-col items-center gap-2">
                       <img
@@ -369,6 +383,7 @@ export const WalletSection: React.FC<WalletSectionProps> = ({
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
+                    disabled={isSubmittingDeposit}
                     className="hidden"
                     required
                   />
